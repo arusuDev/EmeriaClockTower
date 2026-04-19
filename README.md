@@ -40,8 +40,8 @@ $EDITOR .env
 ## ローカル実行
 
 ```bash
-python3 -m venv .venv
-source .venv/bin/activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
 python bot.py
 ```
@@ -60,8 +60,8 @@ git clone https://github.com/arusudev/emeriaclocktower.git EmeriaClockTower
 cd ~/EmeriaClockTower
 
 # 仮想環境＋依存
-python3 -m venv .venv
-./.venv/bin/pip install -r requirements.txt
+python3 -m venv venv
+./venv/bin/pip install -r requirements.txt
 
 # 環境変数
 cp .env.example .env
