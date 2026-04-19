@@ -54,11 +54,10 @@ python bot.py
 # 依存
 sudo apt update && sudo apt install -y python3-venv git
 
-# 配置
-sudo mkdir -p /opt/EmeriaClockTower
-sudo chown "$USER":"$USER" /opt/EmeriaClockTower
-git clone https://github.com/arusudev/emeriaclocktower.git /opt/EmeriaClockTower
-cd /opt/EmeriaClockTower
+# 配置（ホームディレクトリに置く想定。unit ファイルのパスと揃えてください）
+cd ~
+git clone https://github.com/arusudev/emeriaclocktower.git EmeriaClockTower
+cd ~/EmeriaClockTower
 
 # 仮想環境＋依存
 python3 -m venv .venv
@@ -68,7 +67,9 @@ python3 -m venv .venv
 cp .env.example .env
 $EDITOR .env   # DISCORD_TOKEN を記入
 
-# systemd ユニットを設置（User=ubuntu 固定なので必要なら編集）
+# systemd ユニットを設置
+# User=ubuntu / WorkingDirectory=/home/ubuntu/EmeriaClockTower で固定しているので、
+# 配置ユーザやパスを変えた場合はここを書き換えてから cp してください。
 sudo cp deploy/emeria-clocktower.service /etc/systemd/system/
 sudo systemctl daemon-reload
 sudo systemctl enable --now emeria-clocktower.service

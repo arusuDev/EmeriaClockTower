@@ -6,9 +6,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=ubuntu
-WorkingDirectory=/opt/EmeriaClockTower
-EnvironmentFile=/opt/EmeriaClockTower/.env
-ExecStart=/opt/EmeriaClockTower/.venv/bin/python bot.py
+WorkingDirectory=/home/ubuntu/EmeriaClockTower
+EnvironmentFile=-/home/ubuntu/EmeriaClockTower/.env
+ExecStart=/home/ubuntu/EmeriaClockTower/.venv/bin/python bot.py
 Restart=on-failure
 RestartSec=10
 StandardOutput=journal
