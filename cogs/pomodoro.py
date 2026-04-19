@@ -174,6 +174,7 @@ class Pomodoro(commands.Cog):
                     f"**【{cycle}/{session.total_cycles}】作業開始**  "
                     f"{session.work_minutes}分 集中しましょう！VCメンバーをミュートしました。",
                 )
+                await self._play_chime(session)
                 await asyncio.sleep(duration)
 
                 # Skip break after the last work period
@@ -190,6 +191,7 @@ class Pomodoro(commands.Cog):
                     f"**【{cycle}/{session.total_cycles}】休憩**  "
                     f"{session.break_minutes}分 休みましょう！ミュートを解除しました。",
                 )
+                await self._play_chime(session)
                 await asyncio.sleep(duration)
 
             session.phase = "done"
