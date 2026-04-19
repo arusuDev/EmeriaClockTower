@@ -4,7 +4,10 @@ import asyncio
 import logging
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
+
+CHIME_PATH = Path(__file__).resolve().parent.parent / "assets" / "chime.mp3"
 
 import discord
 from discord import app_commands
@@ -103,7 +106,7 @@ class Pomodoro(commands.Cog):
         session.task = asyncio.create_task(self._run(session))
 
         await interaction.response.send_message(
-            "**ポモドーロを開始します！**\n"
+            "**ポモドーロを開始するよ！**\n"
             f"・対象VC: {vc.mention}\n"
             f"・作業: **{work}分** / 休憩: **{rest}分** / サイクル: **{cycles}回**\n"
             "作業中はVCのメンバーをサーバーミュートし、休憩に入ると解除します。"
@@ -192,6 +195,7 @@ class Pomodoro(commands.Cog):
             session.phase = "done"
             await self._apply_mute(session, mute=False)
             await self._announce(channel, "ポモドーロ完了！おつかれさまでした。")
+            await self._play_chime(session)
         except asyncio.CancelledError:
             log.info("Pomodoro task cancelled for guild %s", session.guild_id)
             raise
@@ -246,6 +250,47 @@ class Pomodoro(commands.Cog):
                     await m.edit(mute=False, reason="Pomodoro: 休憩時間/終了")
                 except discord.HTTPException as e:
                     log.warning("Failed to unmute %s: %s", m, e)
+
+    async def _play_chime(self, session: PomodoroSession) -> None:
+        guild = self.bot.get_guild(session.guild_id)
+        if guild is None:
+            return
+        vc = guild.get_channel(session.voice_channel_id)
+        if not isinstance(vc, (discord.VoiceChannel, discord.StageChannel)):
+            return
+        if not any(not m.bot for m in vc.members):
+            return
+        if not CHIME_PATH.is_file():
+            log.warning("Chime file not found: %s", CHIME_PATH)
+            return
+
+        voice_client: Optional[discord.VoiceClient] = None
+        try:
+            voice_client = await vc.connect(timeout=10, reconnect=False)
+            source = discord.FFmpegPCMAudio(str(CHIME_PATH))
+            done = asyncio.Event()
+            loop = asyncio.get_running_loop()
+
+            def _after(error: Optional[Exception]) -> None:
+                if error is not None:
+                    log.warning("Chime playback error: %s", error)
+                loop.call_soon_threadsafe(done.set)
+
+            voice_client.play(source, after=_after)
+            try:
+                await asyncio.wait_for(done.wait(), timeout=30)
+            except asyncio.TimeoutError:
+                log.warning("Chime playback timed out")
+                if voice_client.is_playing():
+                    voice_client.stop()
+        except Exception:
+            log.exception("Failed to play chime")
+        finally:
+            if voice_client is not None and voice_client.is_connected():
+                try:
+                    await voice_client.disconnect(force=False)
+                except Exception:
+                    log.exception("Failed to disconnect voice client after chime")
 
     async def _announce(self, channel: Optional[discord.abc.Messageable], content: str) -> None:
         if channel is None:
